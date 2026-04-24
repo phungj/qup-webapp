@@ -7,7 +7,7 @@ export type Player = {
     level: number,
     xp: number,
     money: number,
-    ranking: number,
-    rating: number,
+    rank: number,
+    q: number,
     skills: Skill[]
 }
