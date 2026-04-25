@@ -1,0 +1,35 @@
+import {
+    amplifier,
+    isolation,
+    pawn,
+    ezWin,
+    focus,
+    doubleDown,
+    raiseTheStakes,
+    react,
+    qBit,
+    relay,
+    coreStabilizer,
+    balancer,
+    burst,
+    pairLink,
+    SkillDef,
+    SkillInstance
+} from "@/src/skills";
+
+export const SkillRegistry: Map<string, SkillDef> = new Map([
+    ["amplifier", amplifier],
+    ["isolation", isolation],
+    ["pawn", pawn],
+    ["ez-win", ezWin],
+    ["focus", focus],
+    ["double-down", doubleDown],
+    ["raise-the-stakes", raiseTheStakes],
+    ["react", react],
+    ["q-bit", qBit],
+    ["relay", relay],
+    ["core-stabilizer", coreStabilizer],
+    ["balancer", balancer],
+    ["burst", burst],
+    ["pair-link", pairLink],
+]);

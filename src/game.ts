@@ -1,6 +1,14 @@
 import {CoinResult, flipCoin} from "@/src/coin";
 import {Player} from "@/src/player";
-import {buildSkillMap, Skill, TriggerEvent} from "@/src/skills";
+import {
+    buildSkillMap, HEX_DIR,
+    isolation,
+    pawn,
+    qBit,
+    SkillGrid,
+    SkillInstance,
+    TriggerEvent
+} from "@/src/skills";
 
 export type FlipContext = {
     result: CoinResult;
@@ -8,8 +16,12 @@ export type FlipContext = {
     qDelta: number;
 
     queue: TriggerEvent[],
-    triggered: Set<number>;
+    triggered: Set<SkillInstance>;
 };
+
+export function checkWin(ctx: FlipContext) {
+    return ctx.result === ctx.playerSide;
+}
 
 function runMatch(player: Player) {
     const playerSide = flipCoin();
@@ -26,10 +38,10 @@ function runMatch(player: Player) {
         }
     }
 
-    return { qCount, upCount, winningSide: playerSide };
+    return { qCount, upCount, playerSide };
 }
 
-function runFlip(player: Player, playerSide: CoinResult, skillGrid: Map<string, Skill>): CoinResult {
+function runFlip(player: Player, playerSide: CoinResult, skillGrid: SkillGrid): CoinResult {
     const context: FlipContext = {
         result: flipCoin(),
         playerSide: playerSide,
@@ -38,20 +50,16 @@ function runFlip(player: Player, playerSide: CoinResult, skillGrid: Map<string, 
         triggered: new Set()
     };
 
-    if (context.result === context.playerSide) {
-        context.qDelta += 1;
-    } else {
-        context.qDelta -= 1;
+    const won = checkWin(context);
 
-        // context.ratingDelta -= Math.max(1, 0.2 * player.rating);
-    }
+    context.qDelta += won ? 1 : getLossPenalty(player);
 
     for (const skill of skillGrid.values()) {
         if (!shouldExecute(skill, context)) continue;
 
         context.triggered.clear();
 
-        skill.effect(context, skill, skillGrid);
+        skill.def.effect(context, skill, skillGrid);
 
         processTriggers(context, skillGrid);
     }
@@ -61,19 +69,19 @@ function runFlip(player: Player, playerSide: CoinResult, skillGrid: Map<string, 
     return context.result;
 }
 
-function processTriggers(ctx: FlipContext, grid: Map<string, Skill>) {
+function processTriggers(ctx: FlipContext, grid: SkillGrid) {
     while (ctx.queue.length > 0) {
-        const { skill, source } = ctx.queue.shift()!;
+        const { source, target } = ctx.queue.shift();
 
-        if (ctx.triggered.has(skill.id)) continue;
-        ctx.triggered.add(skill.id);
+        if (ctx.triggered.has(target)) continue;
+        ctx.triggered.add(target);
 
-        skill.effect(ctx, skill, grid);
+        target.def.effect(ctx, target, grid);
     }
 }
 
-function shouldExecute(skill: Skill, ctx: FlipContext): boolean {
-    switch (skill.trigger) {
+function shouldExecute(skill: SkillInstance, ctx: FlipContext): boolean {
+    switch (skill.def.trigger) {
         case "ON FLIP":
             return true;
         case "ON WIN":
@@ -85,10 +93,11 @@ function shouldExecute(skill: Skill, ctx: FlipContext): boolean {
     }
 }
 
-// TODO: Do the skill instance refactor
-// TODO: Look at other/rest of interesting skills
-// TODO: Test spatial skills
-// TODO: making the rating delta decay for losing proportional to your current rating (start with 0.2)
+function getLossPenalty(player: Player): number {
+    return -Math.max(1, Math.round(0.2 * player.q));
+}
+
+// TODO: Refactor by eliminating the position from the skill
 // TODO: Then move onto parsing skill descriptions
 // TODO: Then move onto making it a basic web app with the results of runmatch
 // TODO: Then add skill parsing to the GUI
@@ -97,7 +106,7 @@ function shouldExecute(skill: Skill, ctx: FlipContext): boolean {
 // TODO: Then possibly start thinking about qmult or real balance
 // TODO: Then possibly start caring about iteration order
 // TODO: Then possibly refactor runmatch to return a list of events to be rendered
-const player: Player = {hero: "", level: 0, money: 0, rank: 0, q: 0, xp: 0, skills: []}
+const player: Player = {hero: "", level: 0, money: 0, rank: 0, q: 0, xp: 0, skills: [{def: pawn, position: {q: 0, r: 0}}, {def: qBit, position: {q: HEX_DIR.N.dq, r: HEX_DIR.N.dr}}]}
 
 console.log(runMatch(player));
 console.log(player.q);

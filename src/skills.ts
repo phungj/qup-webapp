@@ -1,4 +1,4 @@
-import {FlipContext} from "@/src/game";
+import {checkWin, FlipContext} from "@/src/game";
 
 
 // TODO: Standardize these types vs enums in coin
@@ -7,11 +7,11 @@ export type HexDirection = "SE" | "NE" | "N" | "NW" | "SW" | "S";
 export type Trigger = "ON FLIP" | "ON WIN" | "ON LOSS" | "ON TRIGGER";
 
 export type TriggerEvent = {
-    skill: Skill;
-    source?: Skill;
+    source: SkillInstance;
+    target: SkillInstance;
 };
 
-const HEX_DIR: Record<HexDirection, { dq: number; dr: number }> = {
+export const HEX_DIR: Record<HexDirection, { dq: number; dr: number }> = {
     SE: { dq: 1, dr: 0 },
     NE: { dq: 1, dr: -1 },
     N:  { dq: 0, dr: -1 },
@@ -28,20 +28,26 @@ const OPPOSITES: [HexDirection, HexDirection][] = [
     ["NW", "SE"]
 ] as const;
 
-export type Skill = {
-    id: number,
-    name: string,
-    description: string,
-    trigger: Trigger,
-    position: {
-        q: number,
-        r: number,
-    }
-    effect: (ctx: FlipContext, self: Skill, grid: Map<string, Skill>) => void,
+export type SkillDef = {
+    id: string;
+    name: string;
+    description: string;
+    trigger: Trigger;
+    effect: (ctx: FlipContext, self: SkillInstance, grid: SkillGrid) => void;
 };
 
-export function buildSkillMap(skills: Skill[]): Map<string, Skill> {
-    const map = new Map<string, Skill>();
+export type SkillInstance = {
+    def: SkillDef;
+    position: {
+        q: number,
+        r: number
+    };
+};
+
+export type SkillGrid = Map<string, SkillInstance>;
+
+export function buildSkillMap(skills: SkillInstance[]): SkillGrid {
+    const map = new Map<string, SkillInstance>();
 
     for (const skill of skills) {
         const key = `${skill.position.q},${skill.position.r}`;
@@ -51,10 +57,10 @@ export function buildSkillMap(skills: Skill[]): Map<string, Skill> {
     return map;
 }
 
-function getNeighbors(skill: Skill, grid: Map<string, Skill>) {
+function getNeighbors(skill: SkillInstance, grid: SkillGrid): SkillInstance[] {
     const { q, r } = skill.position;
 
-    const result: Skill[] = [];
+    const result: SkillInstance[] = [];
 
     for (const { dq, dr } of HEX_DIRECTIONS) {
         const neighbor = grid.get(`${q + dq},${r + dr}`);
@@ -64,13 +70,13 @@ function getNeighbors(skill: Skill, grid: Map<string, Skill>) {
     return result;
 }
 
-function countNeighbors(skill: Skill, grid: Map<string, Skill>) {
+function countNeighbors(skill: SkillInstance, grid: SkillGrid) {
     return getNeighbors(skill, grid).length;
 }
 
 function getNeighbor(
-    skill: Skill,
-    grid: Map<string, Skill>,
+    skill: SkillInstance,
+    grid: SkillGrid,
     dirName: HexDirection
 ) {
     const dir = HEX_DIR[dirName];
@@ -79,31 +85,29 @@ function getNeighbor(
 
 function enqueueIfExists(
     ctx: FlipContext,
-    target: Skill | undefined,
-    source: Skill
+    source: SkillInstance,
+    target: SkillInstance
 ) {
     if (!target) return;
-    ctx.queue.push({ skill: target, source });
+    ctx.queue.push({ source, target });
 }
 
-export const amplifier: Skill = {
-    id: 0,
+export const amplifier: SkillDef = {
+    id: "amplifier",
     name: "Amplifier",
     description: "+1Q per adjacent node.",
     trigger: "ON FLIP",
-    position: { q: 0, r: 0 },
 
     effect: (ctx, self, grid) => {
         ctx.qDelta += countNeighbors(self, grid);
     }
 };
 
-export const isolation: Skill = {
-    id: 1,
+export const isolation: SkillDef = {
+    id: "isolation",
     name: "Isolation",
-    description: "+5Q if node has no adjacent nodes.",
+    description: "+5Q if no adjacent nodes.",
     trigger: "ON FLIP",
-    position: { q: 0, r: 0 },
 
     effect: (ctx, self, grid) => {
         if (countNeighbors(self, grid) === 0) {
@@ -112,109 +116,96 @@ export const isolation: Skill = {
     }
 };
 
-export const pawn: Skill = {
-    id: 2,
+export const pawn: SkillDef = {
+    id: "pawn",
     name: "Pawn",
-    description: "Trigger the node 1 space North of this.",
+    description: "Trigger the node North.",
     trigger: "ON FLIP",
-    position: { q: 0, r: 0 },
 
     effect: (ctx, self, grid) => {
-        enqueueIfExists(ctx, getNeighbor(self, grid, "N"), self);
+        enqueueIfExists(ctx, self, getNeighbor(self, grid, "N"));
     }
-}
+};
 
-// TODO: Possibly decorate certain triggers?
-export const ezWin: Skill = {
-    id: 3,
+export const ezWin: SkillDef = {
+    id: "ez-win",
     name: "EZ Win",
     description: "+5Q",
     trigger: "ON WIN",
-    position: { q: 0, r: 0 },
 
-    effect: (ctx, self, grid) => {
+    effect: (ctx) => {
         ctx.qDelta += 5;
     }
-}
+};
 
-export const focus: Skill = {
-    id: 4,
+export const focus: SkillDef = {
+    id: "focus",
     name: "Focus",
     description: "Trigger a random adjacent node.",
     trigger: "ON LOSS",
-    position: { q: 0, r: 0 },
 
     effect: (ctx, self, grid) => {
         const neighbors = getNeighbors(self, grid);
-
         if (neighbors.length > 0) {
-            enqueueIfExists(ctx, getRandomElement(neighbors), self);
+            enqueueIfExists(ctx, self, getRandomElement(neighbors));
         }
     }
-}
+};
 
-export const doubleDown: Skill = {
-    id: 5,
+export const doubleDown: SkillDef = {
+    id: "double-down",
     name: "Double Down",
-    description: "Trigger a random adjacent node.",
+    description: "Trigger random adjacent node.",
     trigger: "ON WIN",
-    position: { q: 0, r: 0 },
 
     effect: (ctx, self, grid) => {
         const neighbors = getNeighbors(self, grid);
-
         if (neighbors.length > 0) {
-            enqueueIfExists(ctx, getRandomElement(neighbors), self);
+            enqueueIfExists(ctx, self, getRandomElement(neighbors));
         }
     }
-}
+};
 
-export const raiseTheStakes: Skill = {
-    id: 6,
+export const raiseTheStakes: SkillDef = {
+    id: "raise-the-stakes",
     name: "Raise the Stakes",
     description: "If win: +2Q for each skill included.  If loss: -1Q for each skill included.",
     trigger: "ON FLIP",
-    position: { q: 0, r: 0 },
 
-    effect: (ctx, self, grid) => {
+    effect: (ctx, _, grid) => {
         const qDelta = checkWin(ctx) ? 2 : -1;
-
         ctx.qDelta += qDelta * grid.size;
     }
-}
+};
 
-export const react: Skill = {
-    id: 7,
+export const react: SkillDef = {
+    id: "react",
     name: "React",
     description: "If win: trigger node N of this.  If loss: trigger node S of this.",
     trigger: "ON FLIP",
-    position: { q: 0, r: 0 },
 
     effect: (ctx, self, grid) => {
         const dir = checkWin(ctx) ? "N" : "S";
-        enqueueIfExists(ctx, getNeighbor(self, grid, dir), self);
+        enqueueIfExists(ctx, self, getNeighbor(self, grid, dir));
     }
-}
+};
 
-export const qBit: Skill = {
-    id: 8,
+export const qBit: SkillDef = {
+    id: "q-bit",
     name: "Qbit",
     description: "+5Q",
     trigger: "ON TRIGGER",
-    position: { q: 0, r: 0 },
 
-    effect: (ctx, self, grid) => {
+    effect: (ctx) => {
         ctx.qDelta += 5;
     }
-}
+};
 
-export const relay: Skill = {
-    id: 9,
+export const relay: SkillDef = {
+    id: "relay",
     name: "Relay",
-    description: "+2Q per adjacent node that has another adjacent node.",
+    description: "+2Q per adjacent node that has another adjacent node besides the first.",
     trigger: "ON FLIP",
-
-    position: { q: 0, r: 0 },
 
     effect: (ctx, self, grid) => {
         const neighbors = getNeighbors(self, grid);
@@ -228,13 +219,12 @@ export const relay: Skill = {
     }
 };
 
-export const coreStabilizer: Skill = {
-    id: 10,
+
+export const coreStabilizer: SkillDef = {
+    id: "core-stabilizer",
     name: "Core Stabilizer",
     description: "+3Q if node has 3 or more adjacent nodes.",
     trigger: "ON FLIP",
-
-    position: { q: 0, r: 0 },
 
     effect: (ctx, self, grid) => {
         if (countNeighbors(self, grid) > 2) {
@@ -243,9 +233,54 @@ export const coreStabilizer: Skill = {
     }
 };
 
-function checkWin(ctx: FlipContext) {
-    return ctx.result === ctx.playerSide;
-}
+export const balancer: SkillDef = {
+    id: "balancer",
+    name: "Balancer",
+    description: "+6Q if node has a pair of adjacent nodes in opposite directions.",
+    trigger: "ON FLIP",
+
+    effect: (ctx, self, grid) => {
+        for (const [a, b] of OPPOSITES) {
+            if (
+                getNeighbor(self, grid, a) &&
+                getNeighbor(self, grid, b)
+            ) {
+                ctx.qDelta += 6;
+                return;
+            }
+        }
+    }
+};
+
+export const burst: SkillDef = {
+    id: "burst",
+    name: "Burst",
+    description: "+1Q per adjacent node. +3Q if node has 3 or more adjacent nodes.",
+    trigger: "ON FLIP",
+
+    effect: (ctx, self, grid) => {
+        const n = countNeighbors(self, grid);
+
+        ctx.qDelta += n;
+
+        if (n >= 3) {
+            ctx.qDelta += 3;
+        }
+    }
+};
+
+export const pairLink: SkillDef = {
+    id: "pair-link",
+    name: "Pair Link",
+    description: "+4Q if node has exactly 2 adjacent nodes.",
+    trigger: "ON FLIP",
+
+    effect: (ctx, self, grid) => {
+        if (countNeighbors(self, grid) === 2) {
+            ctx.qDelta += 4;
+        }
+    }
+};
 
 function getRandomElement<T>(array: T[]): T {
     return array[Math.floor(Math.random() * array.length)];

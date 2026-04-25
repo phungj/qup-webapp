@@ -1,6 +1,6 @@
 // TODO: Implement user statistics tracking like w-l
 
-import {Skill} from "@/src/skills";
+import {SkillInstance} from "@/src/skills";
 
 export type Player = {
     hero: string,
@@ -9,5 +9,5 @@ export type Player = {
     money: number,
     rank: number,
     q: number,
-    skills: Skill[]
+    skills: SkillInstance[]
 }
