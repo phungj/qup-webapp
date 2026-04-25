@@ -1,21 +1,25 @@
 import {CoinResult, flipCoin} from "@/src/coin";
 import {Player} from "@/src/player";
-import {buildSkillMap} from "@/src/skills";
+import {buildSkillMap, Skill, TriggerEvent} from "@/src/skills";
 
 export type FlipContext = {
     result: CoinResult;
     playerSide: CoinResult;
     qDelta: number;
+
+    queue: TriggerEvent[],
+    triggered: Set<number>;
 };
 
 function runMatch(player: Player) {
     const playerSide = flipCoin();
+    const skillGrid = buildSkillMap(player.skills);
 
     let qCount = 0;
     let upCount = 0;
 
     while (qCount < 3 && upCount < 3) {
-        if (runFlip(player, playerSide) === CoinResult.Q) {
+        if (runFlip(player, playerSide, skillGrid) === CoinResult.Q) {
             qCount += 1;
         } else {
             upCount += 1;
@@ -25,11 +29,13 @@ function runMatch(player: Player) {
     return { qCount, upCount, winningSide: playerSide };
 }
 
-function runFlip(player: Player, playerSide: CoinResult): CoinResult {
+function runFlip(player: Player, playerSide: CoinResult, skillGrid: Map<string, Skill>): CoinResult {
     const context: FlipContext = {
         result: flipCoin(),
         playerSide: playerSide,
-        qDelta: 0
+        qDelta: 0,
+        queue: [],
+        triggered: new Set()
     };
 
     if (context.result === context.playerSide) {
@@ -40,10 +46,14 @@ function runFlip(player: Player, playerSide: CoinResult): CoinResult {
         // context.ratingDelta -= Math.max(1, 0.2 * player.rating);
     }
 
-    const grid = buildSkillMap(player.skills);
+    for (const skill of skillGrid.values()) {
+        if (!shouldExecute(skill, context)) continue;
 
-    for (const skill of grid.values()) {
-        skill.onFlip?.(context, skill, grid);
+        context.triggered.clear();
+
+        skill.effect(context, skill, skillGrid);
+
+        processTriggers(context, skillGrid);
     }
 
     player.q = Math.max(0, player.q + context.qDelta);
@@ -51,8 +61,32 @@ function runFlip(player: Player, playerSide: CoinResult): CoinResult {
     return context.result;
 }
 
-// TODO: Implement Leila Focus, Luke Double Down and Raise the Stakes, HyperQbe React, Quetzalcoatl Qbit
-// TODO: Look at other interesting skills
+function processTriggers(ctx: FlipContext, grid: Map<string, Skill>) {
+    while (ctx.queue.length > 0) {
+        const { skill, source } = ctx.queue.shift()!;
+
+        if (ctx.triggered.has(skill.id)) continue;
+        ctx.triggered.add(skill.id);
+
+        skill.effect(ctx, skill, grid);
+    }
+}
+
+function shouldExecute(skill: Skill, ctx: FlipContext): boolean {
+    switch (skill.trigger) {
+        case "ON FLIP":
+            return true;
+        case "ON WIN":
+            return ctx.result === ctx.playerSide;
+        case "ON LOSS":
+            return ctx.result !== ctx.playerSide;
+        case "ON TRIGGER":
+            return false;
+    }
+}
+
+// TODO: Do the skill instance refactor
+// TODO: Look at other/rest of interesting skills
 // TODO: Test spatial skills
 // TODO: making the rating delta decay for losing proportional to your current rating (start with 0.2)
 // TODO: Then move onto parsing skill descriptions
