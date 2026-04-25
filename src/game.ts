@@ -1,14 +1,16 @@
 import {CoinResult, flipCoin} from "@/src/coin";
 import {Player} from "@/src/player";
 import {
-    buildSkillMap, HEX_DIR,
+    buildSkillGrid, GridCell, HEX_DIR,
     isolation,
     pawn,
     qBit,
     SkillGrid,
-    SkillInstance,
+    SkillRef,
     TriggerEvent
 } from "@/src/skills";
+import {parseSkillGrid} from "@/src/parser";
+import {skillJSON} from "@/src/skillJSON";
 
 export type FlipContext = {
     result: CoinResult;
@@ -16,7 +18,7 @@ export type FlipContext = {
     qDelta: number;
 
     queue: TriggerEvent[],
-    triggered: Set<SkillInstance>;
+    triggered: Set<GridCell>;
 };
 
 export function checkWin(ctx: FlipContext) {
@@ -25,13 +27,12 @@ export function checkWin(ctx: FlipContext) {
 
 function runMatch(player: Player) {
     const playerSide = flipCoin();
-    const skillGrid = buildSkillMap(player.skills);
 
     let qCount = 0;
     let upCount = 0;
 
     while (qCount < 3 && upCount < 3) {
-        if (runFlip(player, playerSide, skillGrid) === CoinResult.Q) {
+        if (runFlip(player, playerSide, player.grid) === CoinResult.Q) {
             qCount += 1;
         } else {
             upCount += 1;
@@ -54,12 +55,14 @@ function runFlip(player: Player, playerSide: CoinResult, skillGrid: SkillGrid): 
 
     context.qDelta += won ? 1 : getLossPenalty(player);
 
-    for (const skill of skillGrid.values()) {
+    for (const cell of skillGrid.values()) {
+        const skill = cell.skill;
+
         if (!shouldExecute(skill, context)) continue;
 
         context.triggered.clear();
 
-        skill.def.effect(context, skill, skillGrid);
+        skill.def.effect(context, cell, skillGrid);
 
         processTriggers(context, skillGrid);
     }
@@ -76,11 +79,11 @@ function processTriggers(ctx: FlipContext, grid: SkillGrid) {
         if (ctx.triggered.has(target)) continue;
         ctx.triggered.add(target);
 
-        target.def.effect(ctx, target, grid);
+        target.skill.def.effect(ctx, target, grid);
     }
 }
 
-function shouldExecute(skill: SkillInstance, ctx: FlipContext): boolean {
+function shouldExecute(skill: SkillRef, ctx: FlipContext): boolean {
     switch (skill.def.trigger) {
         case "ON FLIP":
             return true;
@@ -97,8 +100,7 @@ function getLossPenalty(player: Player): number {
     return -Math.max(1, Math.round(0.2 * player.q));
 }
 
-// TODO: Refactor by eliminating the position from the skill
-// TODO: Then move onto parsing skill descriptions
+
 // TODO: Then move onto making it a basic web app with the results of runmatch
 // TODO: Then add skill parsing to the GUI
 // TODO: Then add saving and loading the player
@@ -106,7 +108,7 @@ function getLossPenalty(player: Player): number {
 // TODO: Then possibly start thinking about qmult or real balance
 // TODO: Then possibly start caring about iteration order
 // TODO: Then possibly refactor runmatch to return a list of events to be rendered
-const player: Player = {hero: "", level: 0, money: 0, rank: 0, q: 0, xp: 0, skills: [{def: pawn, position: {q: 0, r: 0}}, {def: qBit, position: {q: HEX_DIR.N.dq, r: HEX_DIR.N.dr}}]}
+const player: Player = {hero: "", level: 0, money: 0, rank: 0, q: 0, xp: 0, grid: parseSkillGrid(skillJSON)}
 
 console.log(runMatch(player));
 console.log(player.q);

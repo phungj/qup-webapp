@@ -14,10 +14,24 @@ import {
     burst,
     pairLink,
     SkillDef,
-    SkillInstance
+    SkillGrid
 } from "@/src/skills";
 
-export const SkillRegistry: Map<string, SkillDef> = new Map([
+export type ParsedSkillInstance = {
+    def: SkillDef;
+    q: number;
+    r: number;
+};
+
+type SkillJSON = {
+    skills: {
+        id: string;
+        q: number;
+        r: number;
+    }[];
+};
+
+const SKILL_REGISTRY: Map<string, SkillDef> = new Map([
     ["amplifier", amplifier],
     ["isolation", isolation],
     ["pawn", pawn],
@@ -33,3 +47,29 @@ export const SkillRegistry: Map<string, SkillDef> = new Map([
     ["burst", burst],
     ["pair-link", pairLink],
 ]);
+
+export function parseSkillGrid(
+    json: string,
+): SkillGrid {
+    const data: SkillJSON = JSON.parse(json);
+    const grid: SkillGrid = new Map();
+
+    for (const entry of data.skills) {
+        const def = SKILL_REGISTRY.get(entry.id);
+
+        if (!def) {
+            throw new Error(`Unknown skill id: ${entry.id}`);
+        }
+
+        const q = entry.q;
+        const r = entry.r;
+
+        grid.set(`${q},${r}`, {
+            skill: { def },
+            q,
+            r
+        });
+    }
+
+    return grid;
+}
