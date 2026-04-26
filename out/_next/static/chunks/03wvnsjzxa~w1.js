@@ -1,0 +1,1 @@
+(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["object"==typeof document?document.currentScript:void 0,21057,t=>{t.q("/~phungj/q-up/_next/static/media/grid.0ao9cd7lqhiwa.png")}]);

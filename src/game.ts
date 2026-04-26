@@ -1,10 +1,7 @@
 import {CoinResult, flipCoin} from "@/src/coin";
 import {Player} from "@/src/player";
 import {
-    buildSkillGrid, GridCell, HEX_DIR,
-    isolation,
-    pawn,
-    qBit,
+    GridCell,
     SkillGrid,
     SkillRef,
     TriggerEvent
@@ -21,28 +18,45 @@ export type FlipContext = {
     triggered: Set<GridCell>;
 };
 
+export type MatchState = {
+    qDelta: number;
+    qCount: number;
+    upCount: number;
+    playerSide: CoinResult;
+};
+
+type FlipResult = {
+    result: CoinResult,
+    qDelta: number
+}
+
 export function checkWin(ctx: FlipContext) {
     return ctx.result === ctx.playerSide;
 }
 
-function runMatch(player: Player) {
+export function runMatch(player: Player): MatchState {
     const playerSide = flipCoin();
 
     let qCount = 0;
     let upCount = 0;
+    let totalDelta = 0;
 
     while (qCount < 3 && upCount < 3) {
-        if (runFlip(player, playerSide, player.grid) === CoinResult.Q) {
+        const { result, qDelta } = runFlip(player, playerSide, player.grid);
+
+        totalDelta += qDelta;
+
+        if (result === CoinResult.Q) {
             qCount += 1;
         } else {
             upCount += 1;
         }
     }
 
-    return { qCount, upCount, playerSide };
+    return { qDelta: totalDelta, qCount, upCount, playerSide };
 }
 
-function runFlip(player: Player, playerSide: CoinResult, skillGrid: SkillGrid): CoinResult {
+function runFlip(player: Player, playerSide: CoinResult, skillGrid: SkillGrid): FlipResult {
     const context: FlipContext = {
         result: flipCoin(),
         playerSide: playerSide,
@@ -67,14 +81,15 @@ function runFlip(player: Player, playerSide: CoinResult, skillGrid: SkillGrid): 
         processTriggers(context, skillGrid);
     }
 
-    player.q = Math.max(0, player.q + context.qDelta);
-
-    return context.result;
+    return {
+        result: context.result,
+        qDelta: context.qDelta
+    }
 }
 
 function processTriggers(ctx: FlipContext, grid: SkillGrid) {
     while (ctx.queue.length > 0) {
-        const { source, target } = ctx.queue.shift();
+        const { source, target } = ctx.queue.shift()!;
 
         if (ctx.triggered.has(target)) continue;
         ctx.triggered.add(target);
@@ -101,14 +116,8 @@ function getLossPenalty(player: Player): number {
 }
 
 
-// TODO: Then move onto making it a basic web app with the results of runmatch
-// TODO: Then add skill parsing to the GUI
-// TODO: Then add saving and loading the player
-// TODO: Then deploy!
+
 // TODO: Then possibly start thinking about qmult or real balance
 // TODO: Then possibly start caring about iteration order
 // TODO: Then possibly refactor runmatch to return a list of events to be rendered
-const player: Player = {hero: "", level: 0, money: 0, rank: 0, q: 0, xp: 0, grid: parseSkillGrid(skillJSON)}
-
-console.log(runMatch(player));
-console.log(player.q);
+// TODO: Then possibly refactor matchresult to be an array of flip results

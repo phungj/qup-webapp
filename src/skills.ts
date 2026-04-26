@@ -1,5 +1,5 @@
 import {checkWin, FlipContext} from "@/src/game";
-import {ParsedSkillInstance} from "@/src/parser";
+import {ParsedSkillInstance, SKILL_REGISTRY, SkillParseError} from "@/src/parser";
 
 
 // TODO: Standardize these types vs enums in coin
@@ -86,200 +86,188 @@ function enqueueIfExists(
     ctx.queue.push({source, target});
 }
 
-export const amplifier: SkillDef = {
-    id: "amplifier",
-    name: "Amplifier",
-    description: "+1Q per adjacent node.",
-    trigger: "ON FLIP",
+export const SKILLS: SkillDef[] = [
+    {
+        id: "amplifier",
+        name: "Amplifier",
+        description: "+1Q per adjacent node.",
+        trigger: "ON FLIP",
 
-    effect: (ctx, cell, grid) => {
-        ctx.qDelta += countNeighbors(cell, grid);
-    }
-};
+        effect: (ctx, cell, grid) => {
+            ctx.qDelta += countNeighbors(cell, grid);
+        }
+    },
+    {
+        id: "isolation",
+        name: "Isolation",
+        description: "+5Q if no adjacent nodes.",
+        trigger: "ON FLIP",
 
-export const isolation: SkillDef = {
-    id: "isolation",
-    name: "Isolation",
-    description: "+5Q if no adjacent nodes.",
-    trigger: "ON FLIP",
+        effect: (ctx, cell, grid) => {
+            if (countNeighbors(cell, grid) === 0) {
+                ctx.qDelta += 5;
+            }
+        }
+    },
+    {
+        id: "pawn",
+        name: "Pawn",
+        description: "Trigger the node 1 space North of this.",
+        trigger: "ON FLIP",
 
-    effect: (ctx, cell, grid) => {
-        if (countNeighbors(cell, grid) === 0) {
+        effect: (ctx, cell, grid) => {
+            enqueueIfExists(ctx, cell, getNeighbor(cell, grid, "N"));
+        }
+    },
+    {
+        id: "ez-win",
+        name: "EZ Win",
+        description: "+5Q",
+        trigger: "ON WIN",
+
+        effect: (ctx) => {
             ctx.qDelta += 5;
         }
-    }
-};
+    },
+    {
+        id: "focus",
+        name: "Focus",
+        description: "Trigger a random adjacent node.",
+        trigger: "ON LOSS",
 
-export const pawn: SkillDef = {
-    id: "pawn",
-    name: "Pawn",
-    description: "Trigger the node 1 space North of this.",
-    trigger: "ON FLIP",
+        effect: (ctx, cell, grid) => {
+            const neighbors = getNeighbors(cell, grid);
 
-    effect: (ctx, cell, grid) => {
-        enqueueIfExists(ctx, cell, getNeighbor(cell, grid, "N"));
-    }
-};
-
-export const ezWin: SkillDef = {
-    id: "ez-win",
-    name: "EZ Win",
-    description: "+5Q",
-    trigger: "ON WIN",
-
-    effect: (ctx) => {
-        ctx.qDelta += 5;
-    }
-};
-
-export const focus: SkillDef = {
-    id: "focus",
-    name: "Focus",
-    description: "Trigger a random adjacent node.",
-    trigger: "ON LOSS",
-
-    effect: (ctx, cell, grid) => {
-        const neighbors = getNeighbors(cell, grid);
-
-        if (neighbors.length > 0) {
-            enqueueIfExists(ctx, cell, getRandomElement(neighbors));
-        }
-    }
-};
-
-export const doubleDown: SkillDef = {
-    id: "double-down",
-    name: "Double Down",
-    description: "Trigger a random adjacent node.",
-    trigger: "ON WIN",
-
-    effect: (ctx, cell, grid) => {
-        const neighbors = getNeighbors(cell, grid);
-
-        if (neighbors.length > 0) {
-            enqueueIfExists(ctx, cell, getRandomElement(neighbors));
-        }
-    }
-};
-
-export const raiseTheStakes: SkillDef = {
-    id: "raise-the-stakes",
-    name: "Raise the Stakes",
-    description: "If win: +2Q for each skill included.  If loss: -1Q for each skill included.",
-    trigger: "ON FLIP",
-
-    effect: (ctx, cell, grid) => {
-        const delta = checkWin(ctx) ? 2 : -1;
-        ctx.qDelta += delta * grid.size;
-    }
-};
-
-export const react: SkillDef = {
-    id: "react",
-    name: "React",
-    description: "If win: trigger node N of this.  If loss: trigger node S of this.",
-    trigger: "ON FLIP",
-
-    effect: (ctx, cell, grid) => {
-        const dir = checkWin(ctx) ? "N" : "S";
-        enqueueIfExists(ctx, cell, getNeighbor(cell, grid, dir));
-    }
-};
-
-export const qBit: SkillDef = {
-    id: "q-bit",
-    name: "Qbit",
-    description: "+5Q",
-    trigger: "ON TRIGGER",
-
-    effect: (ctx) => {
-        ctx.qDelta += 5;
-    }
-};
-
-export const relay: SkillDef = {
-    id: "relay",
-    name: "Relay",
-    description: "+2Q per adjacent node that has another adjacent node besides this.",
-    trigger: "ON FLIP",
-
-    effect: (ctx, cell, grid) => {
-        const neighbors = getNeighbors(cell, grid);
-
-        let count = 0;
-
-        for (const neighbor of neighbors) {
-            if (countNeighbors(neighbor, grid) > 1) {
-                count++;
+            if (neighbors.length > 0) {
+                enqueueIfExists(ctx, cell, getRandomElement(neighbors));
             }
         }
+    },
+    {
+        id: "double-down",
+        name: "Double Down",
+        description: "Trigger a random adjacent node.",
+        trigger: "ON WIN",
 
-        ctx.qDelta += count * 2;
-    }
-};
+        effect: (ctx, cell, grid) => {
+            const neighbors = getNeighbors(cell, grid);
 
-
-export const coreStabilizer: SkillDef = {
-    id: "core-stabilizer",
-    name: "Core Stabilizer",
-    description: "+3Q if this has 3 or more adjacent nodes.",
-    trigger: "ON FLIP",
-
-    effect: (ctx, cell, grid) => {
-        if (countNeighbors(cell, grid) >= 3) {
-            ctx.qDelta += 3;
+            if (neighbors.length > 0) {
+                enqueueIfExists(ctx, cell, getRandomElement(neighbors));
+            }
         }
-    }
-};
+    },
+    {
+        id: "raise-the-stakes",
+        name: "Raise the Stakes",
+        description: "If win: +2Q for each skill included.  If loss: -1Q for each skill included.",
+        trigger: "ON FLIP",
 
-export const balancer: SkillDef = {
-    id: "balancer",
-    name: "Balancer",
-    description: "+6Q if this has a pair of adjacent nodes in opposite directions.",
-    trigger: "ON FLIP",
+        effect: (ctx, cell, grid) => {
+            const delta = checkWin(ctx) ? 2 : -1;
+            ctx.qDelta += delta * grid.size;
+        }
+    },
+    {
+        id: "react",
+        name: "React",
+        description: "If win: trigger node N of this.  If loss: trigger node S of this.",
+        trigger: "ON FLIP",
 
-    effect: (ctx, cell, grid) => {
-        for (const [a, b] of OPPOSITES) {
-            if (
-                getNeighbor(cell, grid, a) &&
-                getNeighbor(cell, grid, b)
-            ) {
-                ctx.qDelta += 6;
-                return;
+        effect: (ctx, cell, grid) => {
+            const dir = checkWin(ctx) ? "N" : "S";
+            enqueueIfExists(ctx, cell, getNeighbor(cell, grid, dir));
+        }
+    },
+    {
+        id: "q-bit",
+        name: "Qbit",
+        description: "+5Q",
+        trigger: "ON TRIGGER",
+
+        effect: (ctx) => {
+            ctx.qDelta += 5;
+        }
+    },
+    {
+        id: "relay",
+        name: "Relay",
+        description: "+2Q per adjacent node that has another adjacent node besides this.",
+        trigger: "ON FLIP",
+
+        effect: (ctx, cell, grid) => {
+            const neighbors = getNeighbors(cell, grid);
+
+            let count = 0;
+
+            for (const neighbor of neighbors) {
+                if (countNeighbors(neighbor, grid) > 1) {
+                    count++;
+                }
+            }
+
+            ctx.qDelta += count * 2;
+        }
+    },
+    {
+        id: "core-stabilizer",
+        name: "Core Stabilizer",
+        description: "+3Q if this has 3 or more adjacent nodes.",
+        trigger: "ON FLIP",
+
+        effect: (ctx, cell, grid) => {
+            if (countNeighbors(cell, grid) >= 3) {
+                ctx.qDelta += 3;
+            }
+        }
+    },
+    {
+        id: "balancer",
+        name: "Balancer",
+        description: "+6Q if this has a pair of adjacent nodes in opposite directions.",
+        trigger: "ON FLIP",
+
+        effect: (ctx, cell, grid) => {
+            for (const [a, b] of OPPOSITES) {
+                if (
+                    getNeighbor(cell, grid, a) &&
+                    getNeighbor(cell, grid, b)
+                ) {
+                    ctx.qDelta += 6;
+                    return;
+                }
+            }
+        }
+    },
+    {
+        id: "burst",
+        name: "Burst",
+        description: "+1Q per adjacent node. +3Q if this has 3 or more adjacent nodes.",
+        trigger: "ON FLIP",
+
+        effect: (ctx, cell, grid) => {
+            const n = countNeighbors(cell, grid);
+
+            ctx.qDelta += n;
+
+            if (n >= 3) {
+                ctx.qDelta += 3;
+            }
+        }
+    },
+    {
+        id: "pair-link",
+        name: "Pair Link",
+        description: "+4Q if this has exactly 2 adjacent nodes.",
+        trigger: "ON FLIP",
+
+        effect: (ctx, cell, grid) => {
+            if (countNeighbors(cell, grid) === 2) {
+                ctx.qDelta += 4;
             }
         }
     }
-};
-
-export const burst: SkillDef = {
-    id: "burst",
-    name: "Burst",
-    description: "+1Q per adjacent node. +3Q if this has 3 or more adjacent nodes.",
-    trigger: "ON FLIP",
-
-    effect: (ctx, cell, grid) => {
-        const n = countNeighbors(cell, grid);
-
-        ctx.qDelta += n;
-
-        if (n >= 3) {
-            ctx.qDelta += 3;
-        }
-    }
-};
-
-export const pairLink: SkillDef = {
-    id: "pair-link",
-    name: "Pair Link",
-    description: "+4Q if this has exactly 2 adjacent nodes.",
-    trigger: "ON FLIP",
-
-    effect: (ctx, cell, grid) => {
-        if (countNeighbors(cell, grid) === 2) {
-            ctx.qDelta += 4;
-        }
-    }
-};
+];
 
 function getRandomElement<T>(array: readonly T[], rng=Math.random): T | undefined {
     if (array.length === 0) return undefined;

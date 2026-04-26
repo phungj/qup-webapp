@@ -1,71 +1,85 @@
 import {
-    amplifier,
-    isolation,
-    pawn,
-    ezWin,
-    focus,
-    doubleDown,
-    raiseTheStakes,
-    react,
-    qBit,
-    relay,
-    coreStabilizer,
-    balancer,
-    burst,
-    pairLink,
     SkillDef,
-    SkillGrid
+    SkillGrid, SKILLS
 } from "@/src/skills";
+import {Player} from "@/src/player";
 
 export type ParsedSkillInstance = {
-    def: SkillDef;
+    id: string,
     q: number;
     r: number;
 };
 
-type SkillJSON = {
-    skills: {
-        id: string;
-        q: number;
-        r: number;
-    }[];
+export type PersistedPlayer = {
+    hero: string,
+    level: number,
+    xp: number,
+    money: number,
+    rank: number,
+    q: number,
+    grid: ParsedSkillInstance[]
+}
+
+// TODO: Replace with array of inner type
+export type SkillJSON = {
+    skills: ParsedSkillInstance[];
 };
 
-const SKILL_REGISTRY: Map<string, SkillDef> = new Map([
-    ["amplifier", amplifier],
-    ["isolation", isolation],
-    ["pawn", pawn],
-    ["ez-win", ezWin],
-    ["focus", focus],
-    ["double-down", doubleDown],
-    ["raise-the-stakes", raiseTheStakes],
-    ["react", react],
-    ["q-bit", qBit],
-    ["relay", relay],
-    ["core-stabilizer", coreStabilizer],
-    ["balancer", balancer],
-    ["burst", burst],
-    ["pair-link", pairLink],
-]);
+export const SKILL_REGISTRY: Map<string, SkillDef> =
+    new Map(SKILLS.map(skill => [skill.id, skill]));
 
-export function parseSkillGrid(
-    json: string,
-): SkillGrid {
-    const data: SkillJSON = JSON.parse(json);
+export class SkillParseError extends Error {
+    constructor(message: string) {
+        super(message);
+    }
+}
+
+// TODO: Refactor with a fixed int type
+function isSkillJSON(obj: any): obj is SkillJSON {
+    if (typeof obj !== "object" || obj === null) return false;
+
+    if (!Array.isArray(obj.skills)) return false;
+
+    for (const entry of obj.skills) {
+        if (typeof entry !== "object" || entry === null) return false;
+
+        if (typeof entry.id !== "string") return false;
+
+        if (typeof entry.q !== "number" || !Number.isInteger(entry.q)) return false;
+        if (typeof entry.r !== "number" || !Number.isInteger(entry.r)) return false;
+    }
+
+    return true;
+}
+
+export function buildSkillGrid(skills: ParsedSkillInstance[]): SkillGrid {
     const grid: SkillGrid = new Map();
 
-    for (const entry of data.skills) {
-        const def = SKILL_REGISTRY.get(entry.id);
+    const usedIds = new Set<string>();
+
+    for (const skill of skills) {
+        const def = SKILL_REGISTRY.get(skill.id);
 
         if (!def) {
-            throw new Error(`Unknown skill id: ${entry.id}`);
+            throw new SkillParseError(`Unknown skill id: ${skill.id}`);
         }
 
-        const q = entry.q;
-        const r = entry.r;
+        if (usedIds.has(skill.id)) {
+            throw new SkillParseError(`Duplicate skill id in grid: ${skill.id}`);
+        }
 
-        grid.set(`${q},${r}`, {
-            skill: { def },
+        usedIds.add(skill.id);
+
+        const q = skill.q;
+        const r = skill.r;
+        const key = `${q},${r}`;
+
+        if (grid.has(key)) {
+            throw new SkillParseError(`Duplicate skill position at (${q}, ${r})`);
+        }
+
+        grid.set(key, {
+            skill: {def},
             q,
             r
         });
@@ -73,3 +87,42 @@ export function parseSkillGrid(
 
     return grid;
 }
+
+export function parseSkillGrid(
+    json: string,
+): SkillGrid {
+    const data: SkillJSON = JSON.parse(json);
+
+    if (!isSkillJSON(data)) {
+        throw new SkillParseError("Invalid JSON provided");
+    }
+
+    return buildSkillGrid(data.skills);
+}
+
+function serializeSkillGrid(grid: SkillGrid) {
+    const result: ParsedSkillInstance[] = [];
+
+    for (const cell of grid.values()) {
+        result.push({
+            id: cell.skill.def.id,
+            q: cell.q,
+            r: cell.r
+        });
+    }
+
+    return result;
+}
+
+export function serializePlayer(player: Player): PersistedPlayer {
+    return {
+        hero: player.hero,
+        level: player.level,
+        money: player.money,
+        q: player.q,
+        rank: player.rank,
+        xp: player.xp,
+        grid: serializeSkillGrid(player.grid)
+    };
+}
+

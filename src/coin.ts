@@ -14,6 +14,6 @@ export const CoinVisualState = {
 export type CoinVisualState =
     typeof CoinVisualState[keyof typeof CoinVisualState];
 
-export function flipCoin(): CoinResult {
-    return Math.random() < 0.5 ? CoinResult.Q : CoinResult.UP;
+export function flipCoin(rng=Math.random): CoinResult {
+    return rng() < 0.5 ? CoinResult.Q : CoinResult.UP;
 }
