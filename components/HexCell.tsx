@@ -1,4 +1,5 @@
 import {GridCell} from "@/src/skills";
+import CellContents from "@/components/CellContents";
 
 type HexCellProps = {
     q: number,
@@ -31,14 +32,17 @@ export default function HexCell({
                 w-32 h-32
                 flex items-center justify-center
                 text-xs
-                bg-base-200 border border-base-300
+                bg-gray-500 border border-gray-500
                 select-none
+                text-center
             `}
             style={{
                 clipPath: "polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%)"
             }}
         >
-            <span className="rotate-330">{cell?.skill.def.name}</span>
+            <div className="rotate-330">
+                {cell ? <CellContents skill={cell.skill.def}/> : null}
+            </div>
         </div>
     );
 }

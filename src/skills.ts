@@ -1,5 +1,5 @@
 import {checkWin, FlipContext} from "@/src/game";
-import {ParsedSkillInstance, SKILL_REGISTRY, SkillParseError} from "@/src/parser";
+import {SKILL_REGISTRY} from "@/src/parser";
 
 
 // TODO: Standardize these types vs enums in coin

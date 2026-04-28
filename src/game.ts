@@ -6,8 +6,6 @@ import {
     SkillRef,
     TriggerEvent
 } from "@/src/skills";
-import {parseSkillGrid} from "@/src/parser";
-import {skillJSON} from "@/src/skillJSON";
 
 export type FlipContext = {
     result: CoinResult;
@@ -115,10 +113,8 @@ function getLossPenalty(player: Player): number {
     return -Math.max(1, Math.round(0.2 * player.q));
 }
 
+// TODO: Create a reusable tooltip component
 // TODO: add tooltips to hex grid (create component for this?)
-// TODO: Add ability to drag hexes already on the grid
-// TODO: Add additional styling to hexes (hex drag and hex grid placement) (Create component for this?)
-// TODO: Make hexes a darker shade of gray
 // TODO: Integrate into a component
 // TODO: Integrate into main menu
 // TODO: Test skills and saving and loading
@@ -126,8 +122,18 @@ function getLossPenalty(player: Player): number {
 // TODO: Compile
 
 
+
+// TODO: Add functionality to export your skills
+// TODO: Add additional confirmation or saving functionality when closing skill import when you have an input
+// TODO: Add ability to drag hexes already on the grid
+// TODO: Add angular skill
+// TODO: Flesh out the help page
+// TODO: Make import skill box larger
+// TODO: Keep track of skills that have been placed and remove them from the sidebar accordingly
+// TODO: Then possibly refactor runmatch to return a list of events to be rendered that describe how Q was computed
+// TODO: Then possibly refactor matchresult to be an array of flip results
+
+// TODO: Unify cell styling via css (rotation, color)
 // TODO: Look into reducer based system
 // TODO: Then possibly start thinking about qmult or real balance
 // TODO: Then possibly start caring about iteration order
-// TODO: Then possibly refactor runmatch to return a list of events to be rendered
-// TODO: Then possibly refactor matchresult to be an array of flip results

@@ -24,6 +24,7 @@ function hexToPixel(q: number, r: number) {
     };
 }
 
+// TODO: Look into a better way to draw the heaxgons/do rotation in here and hexcell
 export default function HexGrid({ grid, onDropSkill, onRemoveSkill }: HexGridProps) {
     const cells = generateHexCoords(GRID_RADIUS);
     return (
