@@ -1,4 +1,7 @@
+"use client";
+
 import { ReactNode, useState } from "react";
+import { createPortal } from "react-dom";
 
 type TooltipProps = {
     content: ReactNode;
@@ -7,27 +10,46 @@ type TooltipProps = {
 
 export default function Tooltip({ content, children }: TooltipProps) {
     const [hovered, setHovered] = useState(false);
+    const [rect, setRect] = useState<DOMRect | null>(null);
+
+    const portalRoot =
+        typeof window !== "undefined"
+            ? document.getElementById("tooltip-root")
+            : null;
 
     return (
-        <div
-            className="relative inline-block"
-            onMouseEnter={() => setHovered(true)}
-            onMouseLeave={() => setHovered(false)}
-        >
-            {hovered && (
-                <div
-                    className="
-                        absolute left-full top-1/2 -translate-y-1/2 ml-2
-                        text-xs px-2 py-1 rounded shadow-lg
-                        whitespace-nowrap z-50
-                        bg-white border border-gray-300
-                    "
-                >
-                    {content}
-                </div>
-            )}
+        <>
+            <div
+                className="inline-block"
+                onMouseEnter={(e) => {
+                    setRect(e.currentTarget.getBoundingClientRect());
+                    setHovered(true);
+                }}
+                onMouseLeave={() => setHovered(false)}
+            >
+                {children}
+            </div>
 
-            {children}
-        </div>
+            {hovered && rect && portalRoot &&
+                createPortal(
+                    <div
+                        className="
+                            fixed
+                            z-[9999]
+                            text-xs px-2 py-1 rounded shadow-lg
+                            whitespace-nowrap
+                            bg-white border border-gray-300
+                        "
+                        style={{
+                            top: rect.top + rect.height / 2,
+                            left: rect.right + 8,
+                            transform: "translateY(-50%)"
+                        }}
+                    >
+                        {content}
+                    </div>,
+                    portalRoot
+                )}
+        </>
     );
 }

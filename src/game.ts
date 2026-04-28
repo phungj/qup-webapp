@@ -113,14 +113,8 @@ function getLossPenalty(player: Player): number {
     return -Math.max(1, Math.round(0.2 * player.q));
 }
 
-// TODO: Use a portal? to get tooltips above the grid
-// TODO: Integrate what's currently being rendered into the Skills component
-// TODO: Integrate into main menu (make the button switch to view)
-// TODO: Test skills and saving and loading
+
 // TODO: Add a button for loading via json if desired
-// TODO: Compile
-
-
 // TODO: Make drag image consistent with other cells
 // TODO: Add functionality to export your skills
 // TODO: Add additional confirmation or saving functionality when closing skill import when you have an input
@@ -135,4 +129,6 @@ function getLossPenalty(player: Player): number {
 // TODO: Unify cell styling via css (rotation, color)
 // TODO: Look into reducer based system
 // TODO: Then possibly start thinking about qmult or real balance
+// TODO: Then start thinking about hero implementations
 // TODO: Then possibly start caring about iteration order
+// TODO: Add helper icons that indicate what nodes a skill effects

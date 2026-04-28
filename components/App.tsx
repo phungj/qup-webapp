@@ -20,12 +20,13 @@ import Help from "@/components/Help";
 import SkillList from "@/components/SkillList";
 import HexGrid from "@/components/HexGrid";
 import {placeSkill, removeSkill} from "@/src/skills";
+import Skills from "@/components/Skills";
 
 type MatchExecutionState =
     | {state: "none"}
     | {state: "done", result: MatchState}
 
-type ViewState = "menu" | "results" | "help";
+type ViewState = "menu" | "results" | "help" | "skills";
 
 // TODO: Add a tracker for max Q
 export default function App() {
@@ -80,22 +81,6 @@ export default function App() {
         return null;
     } else {
         return (
-            <div className="flex h-screen overflow-hidden">
-                <aside className="border-r border-base-300 p-4">
-                    <SkillList skills={Array.from(SKILL_REGISTRY.values())} />
-                </aside>
-
-                <main className="flex-1 flex items-center justify-center">
-                    <HexGrid
-                        grid={player.grid}
-                        onDropSkill={handleDropSkill}
-                        onRemoveSkill={handleRemoveSkill}
-                    />
-                </main>
-            </div>
-        );
-
-        return (
             <div>
                 <TitleDialog/>
                 <ErrorDialog errored={errored} message={errorMessage} resetError={resetError}/>
@@ -103,7 +88,7 @@ export default function App() {
                 <div className="h-screen flex flex-col">
                     <Navbar homeButtonHandler={resetMenu} helpButtonHandler={setHelpView}/>
 
-                    <div className="flex-1 flex items-center justify-center">
+                    <div className="flex-1">
                         {getMainContent()}
                     </div>
                 </div>
@@ -135,7 +120,6 @@ export default function App() {
     }
 
 
-
     function resetMenu() {
         setMatchState({
             state: "none"
@@ -154,6 +138,10 @@ export default function App() {
 
     function setHelpView() {
         setView("help");
+    }
+
+    function setSkillsView() {
+        setView("skills");
     }
 
     function loadSkills(json: string) {
@@ -198,16 +186,18 @@ export default function App() {
         switch (view) {
             case "menu":
                 return (
-                    <div className="flex flex-col items-center gap-4">
-                        <TitleItalics/>
-                        <Stats player={player}/>
-                        <div className="flex gap-5 max-w-screen">
-                            <button onClick={playMatch} className="btn btn-primary flex-1">
-                                Play
-                            </button>
-                            <button onClick={() => setImporting(true)} className="btn btn-secondary flex-1 leading-tight">
-                                Load Skills
-                            </button>
+                    <div className="h-full flex items-center justify-center">
+                        <div className="flex flex-col items-center gap-4">
+                            <TitleItalics/>
+                            <Stats player={player}/>
+                            <div className="grid grid-cols-2 gap-5 w-full max-w-md">
+                                <button onClick={playMatch} className="btn btn-primary">
+                                    Play
+                                </button>
+                                <button onClick={setSkillsView} className="btn btn-secondary">
+                                    Skills
+                                </button>
+                            </div>
                         </div>
                     </div>
                 );
@@ -215,6 +205,12 @@ export default function App() {
                 return matchState.state === "done" ? <Results matchState={matchState.result} player={player} playMatch={playMatch} resetMenu={resetMenu}/> : null;
             case "help":
                 return <Help/>;
+            case "skills":
+                return (
+                    <div className="ml-20">
+                        <Skills grid={player.grid} onDropSkill={handleDropSkill} onRemoveSkill={handleRemoveSkill}/>
+                    </div>
+                );
         }
     }
 }
