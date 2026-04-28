@@ -113,10 +113,9 @@ function getLossPenalty(player: Player): number {
     return -Math.max(1, Math.round(0.2 * player.q));
 }
 
-// TODO: Create a reusable tooltip component
-// TODO: add tooltips to hex grid (create component for this?)
-// TODO: Integrate into a component
-// TODO: Integrate into main menu
+// TODO: Use a portal? to get tooltips above the grid
+// TODO: Integrate what's currently being rendered into the Skills component
+// TODO: Integrate into main menu (make the button switch to view)
 // TODO: Test skills and saving and loading
 // TODO: Add a button for loading via json if desired
 // TODO: Compile

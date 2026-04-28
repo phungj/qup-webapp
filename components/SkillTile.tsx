@@ -1,6 +1,7 @@
 import { SkillDef } from "@/src/skills";
 import {useMemo, useState} from "react";
 import CellContents from "@/components/CellContents";
+import Tooltip from "@/components/Tooltip";
 
 type HexTileProps = {
     skill: SkillDef;
@@ -47,31 +48,14 @@ export default function SkillTile({ skill }: HexTileProps) {
         return createHexDragImage(skill.name);
     }, [skill.name]);
 
-    const [hovered, setHovered] = useState<boolean>(false);
-
     return (
-        <div className="relative inline-block">
-            {hovered && (
-                <div className="
-                    absolute left-full top-1/2 -translate-y-1/2 ml-2
-                    text-xs px-2 py-1 rounded shadow-lg
-                    whitespace-nowrap z-50
-                    bg-white
-        ">
-                    <p>{skill.description}</p>
-                </div>
-            )}
-
+        <Tooltip content={<p>{skill.description}</p>}>
             <div
                 draggable="true"
                 onDragStart={(e) => {
-                    setHovered(false);
-
                     e.dataTransfer.setData("skillId", skill.id);
                     e.dataTransfer.setDragImage(dragImageRef, 64, 64);
                 }}
-                onMouseEnter={() => setHovered(true)}
-                onMouseLeave={() => setHovered(false)}
                 className="
             w-32 h-32
             flex flex-col items-center justify-center
@@ -84,8 +68,8 @@ export default function SkillTile({ skill }: HexTileProps) {
                         "polygon(25% 5%, 75% 5%, 100% 50%, 75% 95%, 25% 95%, 0% 50%)"
                 }}
             >
-                <CellContents skill={skill}/>
+                <CellContents skill={skill} />
             </div>
-        </div>
+        </Tooltip>
     );
 }

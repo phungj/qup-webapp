@@ -1,5 +1,6 @@
 import {GridCell} from "@/src/skills";
 import CellContents from "@/components/CellContents";
+import Tooltip from "@/components/Tooltip";
 
 type HexCellProps = {
     q: number,
@@ -40,9 +41,13 @@ export default function HexCell({
                 clipPath: "polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%)"
             }}
         >
-            <div className="rotate-330">
-                {cell ? <CellContents skill={cell.skill.def}/> : null}
-            </div>
+            {cell && (
+                <div className="rotate-330">
+                    <Tooltip content={cell.skill.def.description}>
+                            <CellContents skill={cell.skill.def} />
+                    </Tooltip>
+                </div>
+            )}
         </div>
     );
 }
