@@ -39,6 +39,7 @@ export default function Tooltip({ content, children }: TooltipProps) {
                             text-xs px-2 py-1 rounded shadow-lg
                             whitespace-nowrap
                             bg-white border border-gray-300
+                            text-black
                         "
                         style={{
                             top: rect.top + rect.height / 2,
