@@ -115,8 +115,18 @@ function getLossPenalty(player: Player): number {
     return -Math.max(1, Math.round(0.2 * player.q));
 }
 
+// TODO: add tooltips to hex grid (create component for this?)
+// TODO: Add ability to drag hexes already on the grid
+// TODO: Add additional styling to hexes (hex drag and hex grid placement) (Create component for this?)
+// TODO: Make hexes a darker shade of gray
+// TODO: Integrate into a component
+// TODO: Integrate into main menu
+// TODO: Test skills and saving and loading
+// TODO: Add a button for loading via json if desired
+// TODO: Compile
 
 
+// TODO: Look into reducer based system
 // TODO: Then possibly start thinking about qmult or real balance
 // TODO: Then possibly start caring about iteration order
 // TODO: Then possibly refactor runmatch to return a list of events to be rendered

@@ -86,6 +86,38 @@ function enqueueIfExists(
     ctx.queue.push({source, target});
 }
 
+export function placeSkill(
+    grid: SkillGrid,
+    skillId: string,
+    q: number,
+    r: number
+): SkillGrid {
+    const def = SKILL_REGISTRY.get(skillId);
+    if (!def) return grid;
+
+    let next = new Map(grid);
+
+    for (const [key, cell] of next.entries()) {
+        if (cell.skill.def.id === skillId) {
+            next.delete(key);
+        }
+    }
+
+    next.set(`${q},${r}`, {
+        q,
+        r,
+        skill: { def }
+    });
+
+    return next;
+}
+
+export function removeSkill(grid: SkillGrid, q: number, r: number) {
+    const next = new Map(grid);
+    next.delete(`${q},${r}`);
+    return next;
+}
+
 export const SKILLS: SkillDef[] = [
     {
         id: "amplifier",
@@ -268,6 +300,21 @@ export const SKILLS: SkillDef[] = [
         }
     }
 ];
+
+export function generateHexCoords(radius: number) {
+    const cells: { q: number; r: number }[] = [];
+
+    for (let q = -radius; q <= radius; q++) {
+        for (let r = -radius; r <= radius; r++) {
+            const s = -q - r;
+            if (Math.abs(s) <= radius) {
+                cells.push({ q, r });
+            }
+        }
+    }
+
+    return cells;
+}
 
 function getRandomElement<T>(array: readonly T[], rng=Math.random): T | undefined {
     if (array.length === 0) return undefined;

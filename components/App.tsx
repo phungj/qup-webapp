@@ -9,15 +9,17 @@ import TitleItalics from "@/components/TitleItalics";
 import Navbar from "@/components/Navbar";
 import {
     buildSkillGrid,
-    ParsedSkillInstance,
     parseSkillGrid,
-    PersistedPlayer, serializePlayer,
+    PersistedPlayer, serializePlayer, SKILL_REGISTRY,
     SkillParseError
 } from "@/src/parser";
 import ErrorDialog from "@/components/ErrorDialog";
 import ImportDialog from "@/components/ImportDialog";
 import TitleDialog from "@/components/TitleDialog";
 import Help from "@/components/Help";
+import SkillList from "@/components/SkillList";
+import HexGrid from "@/components/HexGrid";
+import {placeSkill, removeSkill} from "@/src/skills";
 
 type MatchExecutionState =
     | {state: "none"}
@@ -77,6 +79,22 @@ export default function App() {
     if (!mounted) {
         return null;
     } else {
+        return (
+            <div className="flex h-screen overflow-hidden">
+                <aside className="border-r border-base-300 p-4">
+                    <SkillList skills={Array.from(SKILL_REGISTRY.values())} />
+                </aside>
+
+                <main className="flex-1 flex items-center justify-center">
+                    <HexGrid
+                        grid={player.grid}
+                        onDropSkill={handleDropSkill}
+                        onRemoveSkill={handleRemoveSkill}
+                    />
+                </main>
+            </div>
+        );
+
         return (
             <div>
                 <TitleDialog/>
@@ -162,6 +180,20 @@ export default function App() {
         }
     }
 
+    function handleDropSkill(skillID: string, q: number, r: number) {
+        setPlayer(prev => ({
+           ...prev,
+           grid: placeSkill(prev.grid, skillID, q, r)
+        }));
+    }
+
+    function handleRemoveSkill(q: number, r: number) {
+        setPlayer(prev => ({
+            ...prev,
+            grid: removeSkill(prev.grid, q, r)
+        }));
+    }
+
     function getMainContent() {
         switch (view) {
             case "menu":
@@ -186,5 +218,3 @@ export default function App() {
         }
     }
 }
-
-// TODO: Then deploy!
