@@ -122,7 +122,7 @@ function getLossPenalty(player: Player): number {
 // TODO: Compile
 
 
-
+// TODO: Make drag image consistent with other cells
 // TODO: Add functionality to export your skills
 // TODO: Add additional confirmation or saving functionality when closing skill import when you have an input
 // TODO: Add ability to drag hexes already on the grid
