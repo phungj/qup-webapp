@@ -3,7 +3,7 @@ import {Player} from "@/src/player";
 import {
     GridCell,
     SkillGrid,
-    SkillRef,
+    SkillRef, Trigger,
     TriggerEvent
 } from "@/src/skills";
 
@@ -28,33 +28,57 @@ type FlipResult = {
     qDelta: number
 }
 
+export type FlipEvent =
+    | { type: "flip"; result: CoinResult }
+    | { type: "base"; delta: number }
+    | { type: "skill"; cell: GridCell; trigger: Trigger }
+    | { type: "trigger"; source: GridCell; target: GridCell }
+    | { type: "effect"; cell: GridCell; delta: number };
+
+type FlipPlayback = {
+    result: CoinResult;
+    qDelta: number;
+    events: FlipEvent[];
+};
+
+export type MatchPlayback = {
+    flips: FlipPlayback[];
+    final: MatchState;
+};
+
 export function checkWin(ctx: FlipContext) {
     return ctx.result === ctx.playerSide;
 }
 
-export function runMatch(player: Player): MatchState {
+export function runMatch(player: Player): MatchPlayback {
     const playerSide = flipCoin();
 
     let qCount = 0;
     let upCount = 0;
     let totalDelta = 0;
 
+    const flips: FlipPlayback[] = [];
+
     while (qCount < 3 && upCount < 3) {
-        const { result, qDelta } = runFlip(player, playerSide, player.grid);
+        const flip = runFlip(player, playerSide, player.grid);
 
-        totalDelta += qDelta;
+        flips.push(flip)
+        totalDelta += flip.qDelta;
 
-        if (result === CoinResult.Q) {
+        if (flip.result === CoinResult.Q) {
             qCount += 1;
         } else {
             upCount += 1;
         }
     }
 
-    return { qDelta: totalDelta, qCount, upCount, playerSide };
+    return { flips,
+        final: {qDelta: totalDelta, qCount, upCount, playerSide }};
 }
 
-function runFlip(player: Player, playerSide: CoinResult, skillGrid: SkillGrid): FlipResult {
+function runFlip(player: Player, playerSide: CoinResult, skillGrid: SkillGrid): FlipPlayback {
+    const events: FlipEvent[] = [];
+
     const context: FlipContext = {
         result: flipCoin(),
         playerSide: playerSide,
@@ -63,9 +87,14 @@ function runFlip(player: Player, playerSide: CoinResult, skillGrid: SkillGrid): 
         triggered: new Set()
     };
 
+    events.push({ type: "flip", result: context.result });
+
     const won = checkWin(context);
 
-    context.qDelta += won ? 1 : getLossPenalty(player);
+    const baseDelta = won ? 1 : getLossPenalty(player);
+    context.qDelta += baseDelta;
+
+    events.push({ type: "base", delta: baseDelta });
 
     for (const cell of skillGrid.values()) {
         const skill = cell.skill;
@@ -74,25 +103,58 @@ function runFlip(player: Player, playerSide: CoinResult, skillGrid: SkillGrid): 
 
         context.triggered.clear();
 
+        events.push({
+            type: "skill",
+            cell,
+            trigger: skill.def.trigger
+        });
+
+        const before = context.qDelta;
+
         skill.def.effect(context, cell, skillGrid);
 
-        processTriggers(context, skillGrid);
+        const delta = context.qDelta - before;
+
+        events.push({
+            type: "effect",
+            cell,
+            delta
+        });
+
+        processTriggers(context, skillGrid, events);
     }
 
     return {
         result: context.result,
-        qDelta: context.qDelta
+        qDelta: context.qDelta,
+        events
     }
 }
 
-function processTriggers(ctx: FlipContext, grid: SkillGrid) {
+function processTriggers(ctx: FlipContext, grid: SkillGrid, events: FlipEvent[]) {
     while (ctx.queue.length > 0) {
         const { source, target } = ctx.queue.shift()!;
+
+        events.push({
+            type: "trigger",
+            source,
+            target
+        });
 
         if (ctx.triggered.has(target)) continue;
         ctx.triggered.add(target);
 
+        const before = ctx.qDelta;
+
         target.skill.def.effect(ctx, target, grid);
+
+        const delta = ctx.qDelta - before;
+
+        events.push({
+            type: "effect",
+            cell: target,
+            delta
+        });
     }
 }
 
@@ -113,6 +175,7 @@ function getLossPenalty(player: Player): number {
     return -Math.max(1, Math.round(0.2 * player.q));
 }
 
+// TODO: Replace all Q's and UP's with golden variants
 
 // TODO: Add a button for loading via json if desired
 // TODO: Make drag image consistent with other cells
@@ -122,9 +185,6 @@ function getLossPenalty(player: Player): number {
 // TODO: Add angular skill
 // TODO: Flesh out the help page
 // TODO: Make import skill box larger
-// TODO: Keep track of skills that have been placed and remove them from the sidebar accordingly
-// TODO: Then possibly refactor runmatch to return a list of events to be rendered that describe how Q was computed
-// TODO: Then possibly refactor matchresult to be an array of flip results
 
 // TODO: Unify cell styling via css (rotation, color)
 // TODO: Look into reducer based system
