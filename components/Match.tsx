@@ -7,19 +7,19 @@ import Q from "@/public/Q.png";
 import UP from "@/public/UP.png"
 
 type MatchProps = {
-    playback: MatchPlayback
+    playback: MatchPlayback,
+    showResults: () => void
 }
 
 // TODO: Add playerside here
 // TODO: Style flipeventrow accordingly
-// TODO: When there are no more flips, go to the results view
 // TODO: add another button on the results page to go to skills
 // TODO: Also track Q sides and upsides here
 // TODO: Also track current Q, possible refactor required
 // TODO: Replace all Q's and UP's with golden variants (make a component)
 // TODO: Add scrolling to events
 
-export default function Match({playback}: MatchProps) {
+export default function Match({playback, showResults}: MatchProps) {
     const [flipIndex, setFlipIndex] = useState(0);
 
     const currentFlip = playback.flips[flipIndex];
@@ -31,7 +31,11 @@ export default function Match({playback}: MatchProps) {
     }, [playback]);
 
     function nextFlip() {
-        setFlipIndex(i => i + 1);
+        if (flipIndex < playback.flips.length - 1) {
+            setFlipIndex(i => i + 1);
+        } else {
+            showResults();
+        }
     }
 
     return (

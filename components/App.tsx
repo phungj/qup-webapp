@@ -134,6 +134,10 @@ export default function App() {
         setView("skills");
     }
 
+    function setResultsView() {
+        setView("results");
+    }
+
     function loadSkills(json: string) {
         if (!json.trim()) {
             setErrored(true);
@@ -202,7 +206,7 @@ export default function App() {
                     </div>
                 );
             case "match":
-                return <Match playback={playback!}></Match>
+                return <Match playback={playback!} showResults={setResultsView}></Match>
         }
     }
 }

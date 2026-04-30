@@ -188,6 +188,7 @@ function getLossPenalty(player: Player): number {
 // TODO: Implement other players
 // TODO: Implement other heroes
 
+// TODO: Couple view and state together via appstate type
 // TODO: Add a button for loading via json if desired
 // TODO: Make drag image consistent with other cells
 // TODO: Add functionality to export your skills
