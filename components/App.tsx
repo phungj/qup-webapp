@@ -3,31 +3,32 @@
 import {useEffect, useState} from "react";
 import {Player} from "@/src/player";
 import Stats from "@/components/Stats";
-import {MatchState, runMatch} from "@/src/game";
+import {MatchPlayback, MatchState, runMatch} from "@/src/game";
 import Results from "@/components/Results";
 import TitleItalics from "@/components/TitleItalics";
 import Navbar from "@/components/Navbar";
 import {
     buildSkillGrid,
     parseSkillGrid,
-    PersistedPlayer, serializePlayer, SKILL_REGISTRY,
+    PersistedPlayer, serializePlayer,
     SkillParseError
 } from "@/src/parser";
 import ErrorDialog from "@/components/ErrorDialog";
 import ImportDialog from "@/components/ImportDialog";
 import TitleDialog from "@/components/TitleDialog";
 import Help from "@/components/Help";
-import SkillList from "@/components/SkillList";
-import HexGrid from "@/components/HexGrid";
 import {placeSkill, removeSkill} from "@/src/skills";
 import Skills from "@/components/Skills";
+import Match from "@/components/Match";
+import {SkillsButton} from "@/components/SkillsButton";
 
 type MatchExecutionState =
     | {state: "none"}
     | {state: "done", result: MatchState}
 
-type ViewState = "menu" | "results" | "help" | "skills";
+type ViewState = "menu" | "results" | "help" | "skills" | "match";
 
+// TODO: Eliminate casts and assertions
 // TODO: Add a tracker for max Q
 export default function App() {
     const [player, setPlayer] = useState<Player>({
@@ -51,6 +52,7 @@ export default function App() {
 
     const [importing, setImporting] = useState<boolean>(false);
 
+    const [playback, setPlayback] = useState<MatchPlayback | null>(null);
 
     const [view, setView] = useState<ViewState>("menu");
 
@@ -97,28 +99,17 @@ export default function App() {
     }
 
     function playMatch() {
-        const { player: nextPlayer, result } = applyMatch(player);
+        const playback = runMatch(player);
 
-        setPlayer(nextPlayer);
-        setMatchState({ state: "done", result: result });
-        setView("results");
+        setPlayer(prev => ({
+            ...prev,
+            q: Math.max(0, prev.q + playback.final.qDelta)
+        }));
+
+        setMatchState({ state: "done", result: playback.final });
+        setView("match");
+        setPlayback(playback);
     }
-
-    function applyMatch(player: Player): {
-        player: Player;
-        result: MatchState;
-    } {
-        const result = runMatch(player);
-
-        return {
-            result,
-            player: {
-                ...player,
-                q: Math.max(0, player.q + result.qDelta)
-            }
-        };
-    }
-
 
     function resetMenu() {
         setMatchState({
@@ -142,6 +133,10 @@ export default function App() {
 
     function setSkillsView() {
         setView("skills");
+    }
+
+    function setResultsView() {
+        setView("results");
     }
 
     function loadSkills(json: string) {
@@ -194,15 +189,13 @@ export default function App() {
                                 <button onClick={playMatch} className="btn btn-primary">
                                     Play
                                 </button>
-                                <button onClick={setSkillsView} className="btn btn-secondary">
-                                    Skills
-                                </button>
+                                <SkillsButton showSkills={setSkillsView}/>
                             </div>
                         </div>
                     </div>
                 );
             case "results":
-                return matchState.state === "done" ? <Results matchState={matchState.result} player={player} playMatch={playMatch} resetMenu={resetMenu}/> : null;
+                return matchState.state === "done" ? <Results matchState={matchState.result} player={player} playMatch={playMatch} skillsMenu={setSkillsView}/> : null;
             case "help":
                 return <Help/>;
             case "skills":
@@ -211,6 +204,8 @@ export default function App() {
                         <Skills grid={player.grid} onDropSkill={handleDropSkill} onRemoveSkill={handleRemoveSkill}/>
                     </div>
                 );
+            case "match":
+                return <Match playback={playback!} showResults={setResultsView}></Match>
         }
     }
 }
