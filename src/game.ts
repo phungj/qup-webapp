@@ -35,7 +35,7 @@ export type FlipEvent =
     | { type: "trigger"; source: GridCell; target: GridCell }
     | { type: "effect"; cell: GridCell; delta: number };
 
-type FlipPlayback = {
+export type FlipPlayback = {
     result: CoinResult;
     qDelta: number;
     events: FlipEvent[];
@@ -177,6 +177,17 @@ function getLossPenalty(player: Player): number {
 
 // TODO: Replace all Q's and UP's with golden variants
 
+// TODO: Rules rewrite
+// TODO: Make skill order the deterministic spiral
+// TODO: Add skill order overlay
+// TODO: Add maximum execution number to nodes
+
+// TODO: Implement a hero
+// TODO: Implement fixed skills and flex skills
+// TODO: Implement progression
+// TODO: Implement other players
+// TODO: Implement other heroes
+
 // TODO: Add a button for loading via json if desired
 // TODO: Make drag image consistent with other cells
 // TODO: Add functionality to export your skills
@@ -186,6 +197,7 @@ function getLossPenalty(player: Player): number {
 // TODO: Flesh out the help page
 // TODO: Make import skill box larger
 
+// TODO: Make both halves of the flexbox the same height as in unfair flips
 // TODO: Unify cell styling via css (rotation, color)
 // TODO: Look into reducer based system
 // TODO: Then possibly start thinking about qmult or real balance
