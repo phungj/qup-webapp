@@ -20,6 +20,7 @@ import Help from "@/components/Help";
 import {placeSkill, removeSkill} from "@/src/skills";
 import Skills from "@/components/Skills";
 import Match from "@/components/Match";
+import {SkillsButton} from "@/components/SkillsButton";
 
 type MatchExecutionState =
     | {state: "none"}
@@ -188,15 +189,13 @@ export default function App() {
                                 <button onClick={playMatch} className="btn btn-primary">
                                     Play
                                 </button>
-                                <button onClick={setSkillsView} className="btn btn-secondary">
-                                    Skills
-                                </button>
+                                <SkillsButton showSkills={setSkillsView}/>
                             </div>
                         </div>
                     </div>
                 );
             case "results":
-                return matchState.state === "done" ? <Results matchState={matchState.result} player={player} playMatch={playMatch} resetMenu={resetMenu}/> : null;
+                return matchState.state === "done" ? <Results matchState={matchState.result} player={player} playMatch={playMatch} skillsMenu={setSkillsView}/> : null;
             case "help":
                 return <Help/>;
             case "skills":

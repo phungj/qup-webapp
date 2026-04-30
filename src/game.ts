@@ -35,9 +35,17 @@ export type FlipEvent =
     | { type: "trigger"; source: GridCell; target: GridCell }
     | { type: "effect"; cell: GridCell; delta: number };
 
+type FlipCore = {
+    result: CoinResult;
+    qDelta: number;
+    events: FlipEvent[];
+};
+
 export type FlipPlayback = {
     result: CoinResult;
     qDelta: number;
+    qBefore: number;
+    qAfter: number;
     events: FlipEvent[];
 };
 
@@ -55,15 +63,22 @@ export function runMatch(player: Player): MatchPlayback {
 
     let qCount = 0;
     let upCount = 0;
-    let totalDelta = 0;
+    let currentQ = player.q;
 
     const flips: FlipPlayback[] = [];
 
     while (qCount < 3 && upCount < 3) {
-        const flip = runFlip(player, playerSide, player.grid);
+        const flip = runFlip(player, playerSide, player.grid, currentQ);
 
-        flips.push(flip)
-        totalDelta += flip.qDelta;
+        const qBefore = currentQ;
+        currentQ = Math.max(0, currentQ + flip.qDelta);
+
+
+        flips.push({
+            ...flip,
+            qBefore,
+            qAfter: currentQ
+        });
 
         if (flip.result === CoinResult.Q) {
             qCount += 1;
@@ -73,10 +88,10 @@ export function runMatch(player: Player): MatchPlayback {
     }
 
     return { flips,
-        final: {qDelta: totalDelta, qCount, upCount, playerSide }};
+        final: {qDelta: currentQ - player.q, qCount, upCount, playerSide }};
 }
 
-function runFlip(player: Player, playerSide: CoinResult, skillGrid: SkillGrid): FlipPlayback {
+function runFlip(player: Player, playerSide: CoinResult, skillGrid: SkillGrid, currentQ: number): FlipCore {
     const events: FlipEvent[] = [];
 
     const context: FlipContext = {
@@ -91,7 +106,7 @@ function runFlip(player: Player, playerSide: CoinResult, skillGrid: SkillGrid): 
 
     const won = checkWin(context);
 
-    const baseDelta = won ? 1 : getLossPenalty(player);
+    const baseDelta = won ? 1 : getLossPenalty(currentQ);
     context.qDelta += baseDelta;
 
     events.push({ type: "base", delta: baseDelta });
@@ -124,6 +139,7 @@ function runFlip(player: Player, playerSide: CoinResult, skillGrid: SkillGrid): 
         processTriggers(context, skillGrid, events);
     }
 
+    // TODO: Refactor adding Q to be a helper method
     return {
         result: context.result,
         qDelta: context.qDelta,
@@ -171,37 +187,40 @@ function shouldExecute(skill: SkillRef, ctx: FlipContext): boolean {
     }
 }
 
-function getLossPenalty(player: Player): number {
-    return -Math.max(1, Math.round(0.2 * player.q));
+function getLossPenalty(q: number): number {
+    return -Math.max(1, Math.round(0.2 * q));
 }
 
-// TODO: Replace all Q's and UP's with golden variants
-
-// TODO: Rules rewrite
+// TODO: Replace all Q's and UP's with golden variants (make a component)
+// TODO: Add angular skill
+// TODO: Implement q mult
+// TODO: Rules/help rewrite
 // TODO: Make skill order the deterministic spiral
 // TODO: Add skill order overlay
-// TODO: Add maximum execution number to nodes
+// TODO: Add maximum execution number to nodes and render it
+// TODO: Add noting this to the events that occur
+// TODO: Add a button for loading via json if desired
+// TODO: Make import skill box larger
+// TODO: Add functionality to export your skills
 
-// TODO: Implement a hero
+
+// TODO: Implement a hero (tilt meter unique stat)
+// TODO: Implement a hero's skills
+// TODO: Implement a scrollable grid
+// TODO: Implement a scrollable list of skills in the sidebar
+
 // TODO: Implement fixed skills and flex skills
 // TODO: Implement progression
 // TODO: Implement other players
 // TODO: Implement other heroes
 
 // TODO: Couple view and state together via appstate type
-// TODO: Add a button for loading via json if desired
-// TODO: Make drag image consistent with other cells
-// TODO: Add functionality to export your skills
-// TODO: Add additional confirmation or saving functionality when closing skill import when you have an input
-// TODO: Add ability to drag hexes already on the grid
-// TODO: Add angular skill
-// TODO: Flesh out the help page
-// TODO: Make import skill box larger
 
-// TODO: Make both halves of the flexbox the same height as in unfair flips
+// TODO: Make drag image consistent with other cells
+// TODO: Add ability to drag hexes already on the grid
+
+// TODO: Make both halves of the flexbox the same height as in unfair flips (Match, fix other styling and alignment issues as well)
 // TODO: Unify cell styling via css (rotation, color)
+// TODO: Animate change in Q using a countdown component in daisyui?
 // TODO: Look into reducer based system
-// TODO: Then possibly start thinking about qmult or real balance
-// TODO: Then start thinking about hero implementations
-// TODO: Then possibly start caring about iteration order
 // TODO: Add helper icons that indicate what nodes a skill effects
