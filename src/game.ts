@@ -191,17 +191,22 @@ function getLossPenalty(q: number): number {
     return -Math.max(1, Math.round(0.2 * q));
 }
 
-// TODO: Replace all Q's and UP's with golden variants (make a component)
+// TODO: Update the title dialog with golden QUP
+// TODO: Add the button and modal for importing skills to the skill meny
+// TODO: Add functionality to export your skills
+// TODO: Make import skill box larger
+// TODO: Add skill conveniences, like loadouts, copying between, saves
+
 // TODO: Add angular skill
+// TODO: Rules/help rewrite (semantic and golden Qs and UPs as well)
+
 // TODO: Implement q mult
-// TODO: Rules/help rewrite
 // TODO: Make skill order the deterministic spiral
 // TODO: Add skill order overlay
 // TODO: Add maximum execution number to nodes and render it
 // TODO: Add noting this to the events that occur
-// TODO: Add a button for loading via json if desired
-// TODO: Make import skill box larger
-// TODO: Add functionality to export your skills
+
+
 
 
 // TODO: Implement a hero (tilt meter unique stat)
@@ -216,6 +221,7 @@ function getLossPenalty(q: number): number {
 
 // TODO: Couple view and state together via appstate type
 
+// TODO: Make skill tooltips have golden Q and UP if possible
 // TODO: Make drag image consistent with other cells
 // TODO: Add ability to drag hexes already on the grid
 
