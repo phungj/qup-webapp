@@ -57,7 +57,7 @@ export default function Match({playback, showResults}: MatchProps) {
 
                 <div className="flex flex-col gap-3 w-[250px] max-w-md items-stretch">
                     <h1 className="text-3xl font-bold text-center">Events</h1>
-                    <div className="max-h-45 overflow-y-auto flex flex-col gap-2 px-2">
+                    <div className="h-45 overflow-y-auto flex flex-col gap-2 px-2">
                         {currentFlip.events.map((event, i) => <FlipEventRow key={i} event={event}/>)}
                     </div>
                     <h2 className="text-3xl font-bold text-center"><QUPYellow>Q</QUPYellow> Earned: {currentFlip.qDelta}</h2>

@@ -195,12 +195,11 @@ function getLossPenalty(q: number): number {
 // TODO: Add the button and modal for importing skills to the skill meny
 // TODO: Add functionality to export your skills
 // TODO: Make import skill box larger
-// TODO: Add skill conveniences, like loadouts, copying between, saves
 
 // TODO: Add angular skill
 // TODO: Rules/help rewrite (semantic and golden Qs and UPs as well)
 
-// TODO: Implement q mult
+// TODO: Implement q mult, xp, money, etc
 // TODO: Make skill order the deterministic spiral
 // TODO: Add skill order overlay
 // TODO: Add maximum execution number to nodes and render it
@@ -218,6 +217,8 @@ function getLossPenalty(q: number): number {
 // TODO: Implement progression
 // TODO: Implement other players
 // TODO: Implement other heroes
+
+// TODO: Add skill conveniences, like loadouts, copying between, saves
 
 // TODO: Couple view and state together via appstate type
 
