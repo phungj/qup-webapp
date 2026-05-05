@@ -16,7 +16,6 @@ const GRID_HEIGHT = 600;
 const CENTER_X = GRID_WIDTH / 2;
 const CENTER_Y = GRID_HEIGHT / 2;
 
-// TODO: Pass container size dynamically
 function hexToPixel(q: number, r: number) {
     return {
         x: CENTER_X + HEX_DISTANCE * Math.sqrt(3) * (q + r / 2),
@@ -24,7 +23,6 @@ function hexToPixel(q: number, r: number) {
     };
 }
 
-// TODO: Look into a better way to draw the heaxgons/do rotation in here and hexcell
 export default function HexGrid({ grid, onDropSkill, onRemoveSkill }: HexGridProps) {
     const cells = generateHexCoords(GRID_RADIUS);
     return (

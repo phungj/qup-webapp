@@ -139,7 +139,6 @@ function runFlip(player: Player, playerSide: CoinResult, skillGrid: SkillGrid, c
         processTriggers(context, skillGrid, events);
     }
 
-    // TODO: Refactor adding Q to be a helper method
     return {
         result: context.result,
         qDelta: context.qDelta,
@@ -190,44 +189,3 @@ function shouldExecute(skill: SkillRef, ctx: FlipContext): boolean {
 function getLossPenalty(q: number): number {
     return -Math.max(1, Math.round(0.2 * q));
 }
-
-// TODO: Update the title dialog with golden QUP
-// TODO: Add the button and modal for importing skills to the skill meny
-// TODO: Add functionality to export your skills
-// TODO: Make import skill box larger
-
-// TODO: Add angular skill
-// TODO: Rules/help rewrite (semantic and golden Qs and UPs as well)
-
-// TODO: Implement q mult, xp, money, etc
-// TODO: Make skill order the deterministic spiral
-// TODO: Add skill order overlay
-// TODO: Add maximum execution number to nodes and render it
-// TODO: Add noting this to the events that occur
-
-
-
-
-// TODO: Implement a hero (tilt meter unique stat)
-// TODO: Implement a hero's skills
-// TODO: Implement a scrollable grid
-// TODO: Implement a scrollable list of skills in the sidebar
-
-// TODO: Implement fixed skills and flex skills
-// TODO: Implement progression
-// TODO: Implement other players
-// TODO: Implement other heroes
-
-// TODO: Add skill conveniences, like loadouts, copying between, saves
-
-// TODO: Couple view and state together via appstate type
-
-// TODO: Make skill tooltips have golden Q and UP if possible
-// TODO: Make drag image consistent with other cells
-// TODO: Add ability to drag hexes already on the grid
-
-// TODO: Make both halves of the flexbox the same height as in unfair flips (Match, fix other styling and alignment issues as well)
-// TODO: Unify cell styling via css (rotation, color)
-// TODO: Animate change in Q using a countdown component in daisyui?
-// TODO: Look into reducer based system
-// TODO: Add helper icons that indicate what nodes a skill effects

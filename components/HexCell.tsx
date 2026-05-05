@@ -10,7 +10,6 @@ type HexCellProps = {
     onRemoveSkill: (q: number, r: number) => void
 };
 
-// TODO: Refactor with hex size const
 export default function HexCell({
                                     q,
                                     r,

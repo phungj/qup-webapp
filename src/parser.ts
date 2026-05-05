@@ -20,7 +20,6 @@ export type PersistedPlayer = {
     grid: ParsedSkillInstance[]
 }
 
-// TODO: Replace with array of inner type
 export type SkillJSON = {
     skills: ParsedSkillInstance[];
 };
@@ -34,7 +33,6 @@ export class SkillParseError extends Error {
     }
 }
 
-// TODO: Refactor with a fixed int type
 function isSkillJSON(obj: any): obj is SkillJSON {
     if (typeof obj !== "object" || obj === null) return false;
 

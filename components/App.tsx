@@ -28,8 +28,6 @@ type MatchExecutionState =
 
 type ViewState = "menu" | "results" | "help" | "skills" | "match";
 
-// TODO: Eliminate casts and assertions
-// TODO: Add a tracker for max Q
 export default function App() {
     const [player, setPlayer] = useState<Player>({
         hero: "",
@@ -60,8 +58,6 @@ export default function App() {
         setMounted(true);
     }, []);
 
-    // TODO: Add additional validation to this to prevent save editing
-    // TODO: Possibly use isSkillJSON for validation here
     useEffect(() => {
         const rawSave = localStorage.getItem("q-up");
         if (rawSave) {

@@ -1,8 +1,6 @@
 import {checkWin, FlipContext} from "@/src/game";
 import {SKILL_REGISTRY} from "@/src/parser";
 
-
-// TODO: Standardize these types vs enums in coin
 export type HexDirection = "SE" | "NE" | "N" | "NW" | "SW" | "S";
 
 export type Trigger = "ON FLIP" | "ON WIN" | "ON LOSS" | "ON TRIGGER";
@@ -47,7 +45,6 @@ export type GridCell = {
     r: number;
 };
 
-// TODO: Refactor this to not be a string key
 export type SkillGrid = Map<string, GridCell>;
 
 function getNeighbors(

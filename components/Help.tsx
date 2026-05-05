@@ -4,9 +4,6 @@ import grid from "@/public/grid.png";
 import {SKILLS} from "@/src/skills";
 import SkillCard from "@/components/SkillCard";
 
-// TODO: Get this syntax highlighted
-// TODO: Refactor this with a factory
-// TODO: Return to motion animation with this one day
 export default function Help() {
     return (
         <div className="text-center flex flex-col items-center">
